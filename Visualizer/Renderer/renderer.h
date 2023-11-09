@@ -37,7 +37,7 @@ protected:
     void showGrid();
     void populateGrid(int gridSize, float gridSpacing,  float setGridColor[3]);
     void showCordsSystem();
-    void populateCordsSystem();
+    void populateCordsSystem(float axisLength, float setCordsColor[3]);
     void showTrajectory();
     void populateTrajectory();
     void showTools();
@@ -58,6 +58,9 @@ private:
     //// tools functions
     ////// grid
     void GenerateGridVertices(int gridSize, float gridSpacing);
+
+    ////// cords system
+    std::vector<GLfloat> generateCoordinateSystemVertices(float axis_length);
 
     // private variables
     //// camera variables
@@ -84,11 +87,15 @@ private:
     GLuint cordsVAO;
     GLuint cordsVBO;
     QOpenGLShaderProgram *cordsShaderProgram;
+    std::vector<GLfloat> cordsVertices;
+    GLfloat cordsColor[3];
 
     ////// trajectory
     GLuint trajectoryVAO;
     GLuint trajectoryVBO;
     QOpenGLShaderProgram *trajectoryShaderProgram;
+    std::vector<GLfloat> trajectoryVertices;
+    GLfloat trajectoryColor[3];
 };
 
 #endif // RENDERER_H

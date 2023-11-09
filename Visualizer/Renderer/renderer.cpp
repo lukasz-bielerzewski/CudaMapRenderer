@@ -129,20 +129,68 @@ void Renderer::populateGrid(int gridSize, float gridSpacing, float setGridColor[
 
     // Unbind VAO
     glBindVertexArray(0);
-
 }
 
 void Renderer::showCordsSystem()
 {
+    // Use the shader program
+    glUseProgram(this->cordsShaderProgram->programId());
 
+    // Bind the VAO
+    glBindVertexArray(this->cordsVAO);
+
+    // Get the location of the uniform variable in the fragment shader
+    GLint colorUniformLocation = glGetUniformLocation(this->cordsShaderProgram->programId(), "color");
+    GLint modelMatrixUniformLocation = glGetUniformLocation(this->cordsShaderProgram->programId(), "model");
+    GLint viewMatrixUniformLocation = glGetUniformLocation(this->cordsShaderProgram->programId(), "view");
+    GLint projectionMatrixUniformLocation = glGetUniformLocation(this->cordsShaderProgram->programId(), "projection");
+
+    // Set the uniform values
+    glUniform3fv(colorUniformLocation, 1, this->cordsColor);
+    glUniformMatrix4fv(modelMatrixUniformLocation, 1, GL_FALSE, this->modelMatrix.data());
+    glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, this->viewMatrix.data());
+    glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, this->projectionMatrix.data());
+
+    // Draw
+    glDrawArrays(GL_LINES, 0, this->cordsVertices.size());
+
+    // Unbind the VAO
+    glBindVertexArray(0);
+
+    // release shader program
+    glUseProgram(0);
 }
 
-void Renderer::populateCordsSystem()
+void Renderer::populateCordsSystem(float axisLength, float setCordsColor[3])
 {
+    // generate cords vertices data
+    this->cordsVertices = this->generateCoordinateSystemVertices(axisLength);
+
+    // set grid color
+    this->cordsColor[0] = setCordsColor[0];
+    this->cordsColor[1] = setCordsColor[1];
+    this->cordsColor[2] = setCordsColor[2];
+
     // setup shader program
     this->cordsShaderProgram = new QOpenGLShaderProgram();
     this->cordsShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, "Visualizer/Shaders/CordsVertexShader.vert");
     this->cordsShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, "Visualizer/Shaders/CordsFragmentShader.frag");
+
+    // Generate VAO
+    glGenVertexArrays(1, &this->cordsVAO);
+    glBindVertexArray(this->cordsVAO);
+
+    // Generate VBO
+    glGenBuffers(1, &this->cordsVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, this->cordsVBO);
+    glBufferData(GL_ARRAY_BUFFER, this->cordsVertices.size(), this->cordsVertices.data(), GL_STATIC_DRAW);
+
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    // Unbind VAO
+    glBindVertexArray(0);
 }
 
 void Renderer::showTrajectory()
@@ -242,4 +290,26 @@ void Renderer::GenerateGridVertices(int gridSize, float gridSpacing)
             this->gridVertices.push_back(gridSize * gridSpacing);
         }
     }
+}
+
+////// cords system
+std::vector<GLfloat> Renderer::generateCoordinateSystemVertices(float axis_length)
+{
+    // Each axis is represented by a line from the origin to the point at axis_length on that axis.
+    // Therefore, we need two points per axis, and each point has three coordinates (X, Y, Z).
+    std::vector<GLfloat> vertices = {
+        // X axis (Red) from origin to positive X
+        0.0f, 0.0f, 0.0f,  // Origin
+        axis_length, 0.0f, 0.0f,  // End point on X axis
+
+        // Y axis (Green) from origin to positive Y
+        0.0f, 0.0f, 0.0f,  // Origin
+        0.0f, axis_length, 0.0f,  // End point on Y axis
+
+        // Z axis (Blue) from origin to positive Z
+        0.0f, 0.0f, 0.0f,  // Origin
+        0.0f, 0.0f, axis_length,  // End point on Z axis
+    };
+
+    return vertices;
 }
